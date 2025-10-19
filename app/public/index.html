@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>🎙️ Skykube Voice Notes</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin-top: 40px; }
+    button { margin: 5px; padding: 10px 20px; }
+    audio { margin-top: 15px; display: block; width: 320px; }
+    #notes { margin-top: 25px; }
+  </style>
+</head>
+<body>
+  <h2>🎙️ Skykube Voice Notes</h2>
+  <button id="record">Record</button>
+  <button id="stop" disabled>Stop</button>
+  <button id="upload" disabled>Upload</button>
+  <audio id="preview" controls></audio>
+
+  <h3>🗂️ Available Voice Notes</h3>
+  <div id="notes">Loading...</div>
+
+  <script>
+    const API_BASE = "https://yvso558i6a.execute-api.us-east-1.amazonaws.com";  
+
+    let mediaRecorder, audioChunks = [];
+    const recordBtn = document.getElementById("record");
+    const stopBtn = document.getElementById("stop");
+    const uploadBtn = document.getElementById("upload");
+    const preview = document.getElementById("preview");
+    const notesDiv = document.getElementById("notes");
+
+    recordBtn.onclick = async () => {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(audioChunks, { type: "audio/webm" });
+        preview.src = URL.createObjectURL(blob);
+        uploadBtn.disabled = false;
+      };
+
+      mediaRecorder.start();
+      recordBtn.disabled = true;
+      stopBtn.disabled = false;
+      setTimeout(() => mediaRecorder.stop(), 15000);
+    };
+
+    stopBtn.onclick = () => {
+      mediaRecorder.stop();
+      recordBtn.disabled = false;
+      stopBtn.disabled = true;
+    };
+
+    uploadBtn.onclick = async () => {
+      const blob = new Blob(audioChunks, { type: "audio/webm" });
+      const res = await fetch(`${API_BASE}/presigned-url`);
+      const { upload_url } = await res.json();
+      await fetch(upload_url, { method: "PUT", body: blob });
+      alert("✅ Uploaded!");
+      uploadBtn.disabled = true;
+      listNotes();
+    };
+
+    async function listNotes() {
+      notesDiv.innerHTML = "Loading...";
+      const res = await fetch(`${API_BASE}/list`);
+      const { files } = await res.json();
+      if (!files.length) return notesDiv.innerHTML = "No voice notes yet.";
+
+      notesDiv.innerHTML = "";
+      files.forEach(url => {
+        const a = document.createElement("audio");
+        a.controls = true;
+        a.src = url;
+        notesDiv.appendChild(a);
+      });
+
+      // Play random one
+      const random = files[Math.floor(Math.random() * files.length)];
+      preview.src = random;
+      preview.play();
+    }
+
+    listNotes();
+  </script>
+</body>
+</html>

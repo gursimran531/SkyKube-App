@@ -45,43 +45,61 @@
       mediaRecorder.start();
       recordBtn.disabled = true;
       stopBtn.disabled = false;
-      setTimeout(() => mediaRecorder.stop(), 15000);
+      setTimeout(() => {
+        if(mediaRecorder.state === "recording") mediaRecorder.stop();
+      }, 15000);
     };
 
     stopBtn.onclick = () => {
-      mediaRecorder.stop();
+      if(mediaRecorder.state === "recording") mediaRecorder.stop();
       recordBtn.disabled = false;
       stopBtn.disabled = true;
     };
 
     uploadBtn.onclick = async () => {
-      const blob = new Blob(audioChunks, { type: "audio/webm" });
-      const res = await fetch(`${API_BASE}/presigned-url`);
-      const { upload_url } = await res.json();
-      await fetch(upload_url, { method: "PUT", body: blob });
-      alert("✅ Uploaded!");
-      uploadBtn.disabled = true;
-      listNotes();
+      try {
+        const blob = new Blob(audioChunks, { type: "audio/webm" });
+        const res = await fetch(`${API_BASE}/presigned-url`);
+        const data = await res.json();
+        const upload_url = data.upload_url || data.body && JSON.parse(data.body).upload_url;
+
+        if (!upload_url) throw new Error("No upload URL returned");
+
+        await fetch(upload_url, { method: "PUT", body: blob });
+        alert("✅ Uploaded!");
+        uploadBtn.disabled = true;
+        listNotes();
+      } catch (err) {
+        console.error(err);
+        alert("Upload failed. Check console.");
+      }
     };
 
     async function listNotes() {
       notesDiv.innerHTML = "Loading...";
-      const res = await fetch(`${API_BASE}/list`);
-      const { files } = await res.json();
-      if (!files.length) return notesDiv.innerHTML = "No voice notes yet.";
+      try {
+        const res = await fetch(`${API_BASE}/list`);
+        const data = await res.json();
+        const files = data.files || data.body && JSON.parse(data.body).files || [];
 
-      notesDiv.innerHTML = "";
-      files.forEach(url => {
-        const a = document.createElement("audio");
-        a.controls = true;
-        a.src = url;
-        notesDiv.appendChild(a);
-      });
+        if (!files.length) return notesDiv.innerHTML = "No voice notes yet.";
 
-      // Play random one
-      const random = files[Math.floor(Math.random() * files.length)];
-      preview.src = random;
-      preview.play();
+        notesDiv.innerHTML = "";
+        files.forEach(url => {
+          const a = document.createElement("audio");
+          a.controls = true;
+          a.src = url;
+          notesDiv.appendChild(a);
+        });
+
+        // Play random one
+        const random = files[Math.floor(Math.random() * files.length)];
+        preview.src = random;
+        preview.play();
+      } catch (err) {
+        console.error(err);
+        notesDiv.innerHTML = "Failed to load notes.";
+      }
     }
 
     listNotes();

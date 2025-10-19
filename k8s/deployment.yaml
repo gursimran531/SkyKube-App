@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skykube-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: skykube
+  template:
+    metadata:
+      labels:
+        app: skykube
+    spec:
+      containers:
+        - name: skykube
+          image: 789103393231.dkr.ecr.us-east-1.amazonaws.com/skykube-repo/skykube:latest
+          ports:
+            - containerPort: 8080

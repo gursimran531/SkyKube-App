@@ -15,5 +15,6 @@ spec:
       containers:
         - name: skykube
           image: 789103393231.dkr.ecr.us-east-1.amazonaws.com/skykube-repo:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080

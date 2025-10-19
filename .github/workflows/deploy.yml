@@ -27,7 +27,7 @@ jobs:
       - name: Build, tag, and push image to ECR
         run: |
           IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/skykube:latest
-          docker build -t $IMAGE_URI .
+          docker build -t $IMAGE_URI ./app
           docker push $IMAGE_URI
           echo "image=$IMAGE_URI" >> $GITHUB_ENV
 

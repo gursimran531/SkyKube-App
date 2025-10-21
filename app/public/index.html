@@ -2,107 +2,480 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>🎙️ Skykube Voice Notes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🌌 SkyKube Spill It</title>
   <style>
-    body { font-family: sans-serif; text-align: center; margin-top: 40px; }
-    button { margin: 5px; padding: 10px 20px; }
-    audio { margin-top: 15px; display: block; width: 320px; }
-    #notes { margin-top: 25px; }
+    /* --- CSS Reset & Base --- */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(232, 232, 255, 0.3); }
+      70% { box-shadow: 0 0 0 20px rgba(232, 232, 255, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(232, 232, 255, 0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -468px 0; }
+      100% { background-position: 468px 0; }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        Helvetica, Arial, sans-serif;
+      background: linear-gradient(145deg, #0f0c29, #302b63, #24243e);
+      color: #e0e0e0;
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      width: 100%;
+      flex-grow: 1;
+    }
+
+    /* --- Header & Hero --- */
+    header {
+      text-align: center;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      font-size: 1.1rem;
+      color: #c0c0e0;
+    }
+
+    /* --- Recorder Section --- */
+    .recorder {
+      text-align: center;
+      padding: 2.5rem 0;
+      animation: fadeIn 0.7s ease-out;
+    }
+
+    #preview {
+      display: none; /* Hide until recorded */
+      width: 100%;
+      margin: 1.5rem 0 1rem;
+    }
+
+    .button-group {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    button {
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 1rem 1.75rem;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: #4a47a3;
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      background: #5e5bc7;
+    }
+
+    button:disabled {
+      background: #3a3a5a;
+      color: #777;
+      cursor: not-allowed;
+    }
+
+    #record-btn.recording {
+      background: #c70039;
+      color: white;
+      animation: pulse 1.5s infinite;
+    }
+
+    #record-btn.recording:hover {
+      background: #e74c3c;
+    }
+
+    #upload-btn {
+      background: #27ae60;
+    }
+    #upload-btn:hover:not(:disabled) {
+      background: #2ecc71;
+    }
+
+    /* --- Whispers Section --- */
+    .whispers {
+      margin-top: 2rem;
+      animation: fadeIn 0.9s ease-out;
+    }
+
+    .whispers h2 {
+      font-size: 1.75rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #fff;
+    }
+
+    #notes-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .note {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 1rem;
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    .note audio {
+      width: 100%;
+    }
+
+    .loading-shimmer {
+      height: 70px;
+      width: 100%;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      background-image: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0.05) 0%,
+        rgba(255, 255, 255, 0.1) 20%,
+        rgba(255, 255, 255, 0.05) 40%,
+        rgba(255, 255, 255, 0.05) 100%
+      );
+      background-repeat: no-repeat;
+      background-size: 800px 104px;
+      animation: shimmer 1s linear infinite;
+    }
+
+    #error-message,
+    #empty-message {
+      text-align: center;
+      font-size: 1.1rem;
+      color: #aaa;
+      padding: 2rem;
+    }
+
+    /* --- Toast Notification --- */
+    #toast {
+      visibility: hidden;
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #27ae60;
+      color: #fff;
+      padding: 1rem 1.5rem;
+      border-radius: 50px;
+      font-weight: 600;
+      z-index: 100;
+      opacity: 0;
+      transition: visibility 0.5s, opacity 0.5s, bottom 0.5s;
+    }
+
+    #toast.show {
+      visibility: visible;
+      opacity: 1;
+      bottom: 50px;
+    }
+
+    /* --- Footer --- */
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: #aaa;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
   </style>
 </head>
 <body>
-  <h2>🎙️ Skykube Voice Notes</h2>
-  <button id="record">Record</button>
-  <button id="stop" disabled>Stop</button>
-  <button id="upload" disabled>Upload</button>
-  <audio id="preview" controls></audio>
+  <div class="container">
+    <header>
+      <h1>🌌 SkyKube Spill It</h1>
+      <p>Say what’s on your mind — anonymously.</p>
+      <p>
+        Record a 15-second voice note. No names. No judgments. Your note
+        fades after 24 hours.
+      </p>
+    </header>
 
-  <h3>🗂️ Available Voice Notes</h3>
-  <div id="notes">Loading...</div>
+    <main>
+      <section class="recorder">
+        <audio id="preview" controls></audio>
+        <div class="button-group">
+          <button id="record-btn">🎙️ Record</button>
+          <button id="stop-btn" disabled>■ Stop</button>
+          <button id="upload-btn" disabled>☁️ Drop It</button>
+        </div>
+      </section>
+
+      <section class="whispers">
+        <h2>Whispers in the Sky ☁️</h2>
+        <div id="notes-container">
+          <div class="loading-shimmer"></div>
+          <div class="loading-shimmer"></div>
+        </div>
+        <div id="error-message" style="display: none"></div>
+        <div id="empty-message" style="display: none"></div>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <p>SkyKube Spill It — ephemeral voices in the cloud ☁️</p>
+  </footer>
+
+  <div id="toast">Your voice has been released into the Sky 🌌</div>
 
   <script>
-    const API_BASE = "https://yvso558i6a.execute-api.us-east-1.amazonaws.com/dev";  
+    // 
+    // --- IMPORTANT ---
+    // This is your API Gateway endpoint.
+    // We are using the *working* endpoints we already configured.
+    //
+    const API_BASE = "https://yvso558i6a.execute-api.us-east-1.amazonaws.com/dev";
 
-    let mediaRecorder, audioChunks = [];
-    const recordBtn = document.getElementById("record");
-    const stopBtn = document.getElementById("stop");
-    const uploadBtn = document.getElementById("upload");
+    // --- DOM Elements ---
+    const recordBtn = document.getElementById("record-btn");
+    const stopBtn = document.getElementById("stop-btn");
+    const uploadBtn = document.getElementById("upload-btn");
     const preview = document.getElementById("preview");
-    const notesDiv = document.getElementById("notes");
+    const notesContainer = document.getElementById("notes-container");
+    const errorMessage = document.getElementById("error-message");
+    const emptyMessage = document.getElementById("empty-message");
+    const toast = document.getElementById("toast");
 
+    // --- App State ---
+    let mediaRecorder,
+      audioChunks = [],
+      audioBlob = null;
+
+    // --- Record Logic ---
     recordBtn.onclick = async () => {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream);
-      audioChunks = [];
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        audioBlob = null;
 
-      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(audioChunks, { type: "audio/webm" });
-        preview.src = URL.createObjectURL(blob);
-        uploadBtn.disabled = false;
-      };
+        mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
 
-      mediaRecorder.start();
-      recordBtn.disabled = true;
-      stopBtn.disabled = false;
-      setTimeout(() => {
-        if(mediaRecorder.state === "recording") mediaRecorder.stop();
-      }, 15000);
+        mediaRecorder.onstop = () => {
+          audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+          preview.src = URL.createObjectURL(audioBlob);
+          preview.style.display = "block";
+          
+          recordBtn.disabled = false;
+          recordBtn.textContent = "🎙️ Record";
+          recordBtn.classList.remove("recording");
+          stopBtn.disabled = true;
+          uploadBtn.disabled = false;
+        };
+
+        mediaRecorder.start();
+        recordBtn.disabled = true;
+        recordBtn.textContent = "🎙️ Recording...";
+        recordBtn.classList.add("recording");
+        stopBtn.disabled = false;
+        uploadBtn.disabled = true;
+        preview.style.display = "none";
+
+        // 15-second limit
+        setTimeout(() => {
+          if (mediaRecorder && mediaRecorder.state === "recording") {
+            mediaRecorder.stop();
+          }
+        }, 15000);
+
+      } catch (err) {
+        console.error("Error getting media:", err);
+        alert("Could not access microphone. Please allow microphone permissions.");
+        recordBtn.disabled = false;
+        recordBtn.textContent = "🎙️ Record";
+      }
     };
 
     stopBtn.onclick = () => {
-      if(mediaRecorder.state === "recording") mediaRecorder.stop();
-      recordBtn.disabled = false;
-      stopBtn.disabled = true;
-    };
-
-    uploadBtn.onclick = async () => {
-      try {
-        const blob = new Blob(audioChunks, { type: "audio/webm" });
-        const res = await fetch(`${API_BASE}/presigned-url`);
-        const data = await res.json();
-        const upload_url = data.upload_url || data.body && JSON.parse(data.body).upload_url;
-
-        if (!upload_url) throw new Error("No upload URL returned");
-
-        await fetch(upload_url, { method: "PUT", body: blob });
-        alert("✅ Uploaded!");
-        uploadBtn.disabled = true;
-        listNotes();
-      } catch (err) {
-        console.error(err);
-        alert("Upload failed. Check console.");
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
       }
     };
 
-    async function listNotes() {
-      notesDiv.innerHTML = "Loading...";
+    // --- Upload Logic ---
+    uploadBtn.onclick = async () => {
+      if (!audioBlob) return;
+
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = "Dropping...";
+
       try {
-        const res = await fetch(`${API_BASE}/list`);
+        // 1. Get the presigned URL from our Lambda
+        const res = await fetch(`${API_BASE}/presigned-url`);
+        if (!res.ok) throw new Error(`API Error: ${res.statusText}`);
+        
         const data = await res.json();
-        const files = data.files || data.body && JSON.parse(data.body).files || [];
+        
+        // Handle the AWS_PROXY format where response is in a stringified 'body'
+        const upload_url = data.upload_url || (data.body && JSON.parse(data.body).upload_url);
 
-        if (!files.length) return notesDiv.innerHTML = "No voice notes yet.";
+        if (!upload_url) throw new Error("Could not get an upload URL.");
 
-        notesDiv.innerHTML = "";
-        files.forEach(url => {
-          const a = document.createElement("audio");
-          a.controls = true;
-          a.src = url;
-          notesDiv.appendChild(a);
+        // 2. Upload the audio blob directly to S3
+        const s3res = await fetch(upload_url, {
+          method: "PUT",
+          body: audioBlob,
+          headers: {
+            "Content-Type": "audio/webm",
+          },
         });
 
-        // Play random one
-        const random = files[Math.floor(Math.random() * files.length)];
-        preview.src = random;
-        preview.play();
+        if (!s3res.ok) throw new Error(`S3 Upload Error: ${s3res.statusText}`);
+        
+        // 3. Success!
+        showToast("Your voice has been released into the Sky 🌌");
+        uploadBtn.textContent = "☁️ Drop It";
+        preview.style.display = "none";
+        audioBlob = null;
+        
+        // Refresh the list
+        listNotes();
+
       } catch (err) {
         console.error(err);
-        notesDiv.innerHTML = "Failed to load notes.";
+        alert("Upload failed. The Sky might be busy. Please try again.");
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = "☁️ Drop It";
+      }
+    };
+
+    // --- List Logic ---
+    async function listNotes() {
+      showLoading(true);
+      errorMessage.style.display = "none";
+      emptyMessage.style.display = "none";
+
+      try {
+        const res = await fetch(`${API_BASE}/list`);
+        if (!res.ok) throw new Error(`API Error: ${res.statusText}`);
+        
+        const data = await res.json();
+        
+        // Handle the AWS_PROXY format
+        const files = (data.files || (data.body && JSON.parse(data.body).files)) || [];
+
+        showLoading(false);
+        notesContainer.innerHTML = ""; // Clear old notes
+
+        if (!files.length) {
+          emptyMessage.textContent = "The Sky is quiet right now... Be the first to spill.";
+          emptyMessage.style.display = "block";
+          return;
+        }
+
+        // Sort files to show newest first (assuming keys are 'voice_TIMESTAMP.webm')
+        files.sort().reverse(); 
+
+        files.forEach((url) => {
+          const noteDiv = document.createElement("div");
+          noteDiv.className = "note";
+          
+          const audio = document.createElement("audio");
+          audio.controls = true;
+          audio.src = url;
+          audio.preload = "metadata"; // Don't download full file
+          
+          noteDiv.appendChild(audio);
+          notesContainer.appendChild(noteDiv);
+        });
+        
+        // Auto-play a random one, as requested
+        playRandomNote(files);
+
+      } catch (err) {
+        console.error(err);
+        showLoading(false);
+        notesContainer.innerHTML = "";
+        errorMessage.textContent = "The Sky is quiet right now… Try again in a bit.";
+        errorMessage.style.display = "block";
       }
     }
 
+    // --- Helper Functions ---
+    function showLoading(isLoading) {
+      if (isLoading) {
+        notesContainer.innerHTML = `
+          <div class="loading-shimmer"></div>
+          <div class="loading-shimmer"></div>
+          <div class="loading-shimmer"></div>
+        `;
+      } else {
+        notesContainer.innerHTML = "";
+      }
+    }
+
+    function playRandomNote(files) {
+        if (!files || !files.length) return;
+        
+        // Use the main player 'preview' to play the random note
+        const randomUrl = files[Math.floor(Math.random() * files.length)];
+        preview.src = randomUrl;
+        preview.style.display = "block";
+        
+        // Note: Autoplay with sound is often blocked by browsers.
+        // We set it to muted to increase chances of it playing.
+        preview.muted = true; 
+        preview.play().catch(e => console.warn("Autoplay was prevented by browser."));
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, 3000);
+    }
+
+    // --- Initial Load & Refresh ---
+    
+    // Initial load
     listNotes();
+
+    // Auto-refresh every minute
+    setInterval(listNotes, 60000);
+
   </script>
 </body>
 </html>

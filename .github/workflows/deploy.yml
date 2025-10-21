@@ -1,9 +1,9 @@
 name: Build & Deploy to EKS
 
 on:
-  push:
-    branches:
-      - main
+   push:
+     branches:
+       - main
 
 jobs:
   deploy:
@@ -26,7 +26,8 @@ jobs:
 
       - name: Build, tag, and push image to ECR
         run: |
-          IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/skykube-repo:latest
+          IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/skykube-repo:${GITHUB_SHA}
+          echo "Building Docker image $IMAGE_URI"
           docker build -t $IMAGE_URI ./app
           docker push $IMAGE_URI
           echo "image=$IMAGE_URI" >> $GITHUB_ENV
@@ -36,5 +37,8 @@ jobs:
 
       - name: Deploy to EKS
         run: |
-          sed -i "s|789103393231.dkr.ecr.us-east-1.amazonaws.com/skykube-repo:latest|${{ env.image }}|" k8s/deployment.yaml
+          # Update image in Kubernetes deployment YAML
+          sed -i "s|image: .*|image: ${{ env.image }}|" k8s/deployment.yaml
+
           kubectl apply -f k8s/
+          kubectl rollout status deployment skykube-deployment

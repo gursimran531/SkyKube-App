@@ -10,7 +10,6 @@ metadata:
     
     # Listen on HTTP 80 and HTTPS 443
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]' 
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:789103393231:certificate/0a6cbbb0-94f0-46d4-b4fd-015d43bf4ce8
     alb.ingress.kubernetes.io/backend-protocol: HTTPS 
 
 spec:

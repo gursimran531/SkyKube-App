@@ -9,7 +9,7 @@ metadata:
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]' # CloudFront handles HTTPS
     alb.ingress.kubernetes.io/backend-protocol: HTTP
-    alb.ingress.kubernetes.io/healthcheck-path:
+    alb.ingress.kubernetes.io/security-groups: sg-078eede689c680611
 
 spec:
   tls:

@@ -4,10 +4,10 @@ metadata:
   name: skykube-service
   namespace: default
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: skykube
   ports:
     - port: 80     
-      targetPort: 3000 
+      targetPort: 8080 
       protocol: TCP

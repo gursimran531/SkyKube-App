@@ -1,4 +1,4 @@
-# 🌌 SkyKube - Cloud-Native Voice Notes Platform
+# 🌌 SkyKube
 
 **SkyKube** is a cloud-native project designed to demonstrate end-to-end DevOps practices using **AWS, Terraform, Docker, Kubernetes, and CI/CD automation**.  
 The project is divided into two repositories:  
@@ -20,6 +20,7 @@ SkyKube-App/
 ├── k8s/
 │   ├── deployment.yaml     # Kubernetes Deployment manifest
 │   ├── service.yaml        # Kubernetes Service manifest
+|   └── ingress.yaml
 ├── .github/
 │   └── workflows/
 │       └── deploy.yml      # GitHub Actions CI/CD pipeline
@@ -27,8 +28,8 @@ SkyKube-App/
 │   ├── Dockerfile          # Docker build instructions for the app
 │   ├── index.js            
 |   ├── package.json
-|   ├── public/
-│       ├── index.html  
+|   └── public/
+│       └── index.html  
 └── README.md               # Project documentation
 ```
 
@@ -128,12 +129,15 @@ Contains Terraform scripts to provision:
 ## 🧠 Future Improvements
 - Integrate Ansible for configuration management  
 - Add monitoring via Prometheus + Grafana  
-- Enable automated testing before deployment  
-- Improve frontend UI and add audio transcription  
+
+---
+
+## Notes
+- Once the infrastructure is created, you’ll need to deploy the application so that the ALB (Application Load Balancer) is provisioned. After that, you can use the ALB’s DNS name when setting up CloudFront to ensure proper routing. I also encountered a few issues related to security group configurations during this process that I had to manually allow traffic from alb sg to node group sg — any suggestions or improvements would be greatly appreciated.
 
 ---
 
 ## 👤 Author
 **Gursimran Singh**  
 AWS Certified Cloud & DevOps Engineer  
-📧 [LinkedIn Profile](https://linkedin.com/in/gursimran531)
+📧 [LinkedIn Profile](https://www.linkedin.com/in/gursimran-singh-269ba5224/)
